@@ -131,8 +131,8 @@ const color = (r,g,b,a) => [r,g,b,a]
 
 const memberColor = (color, member, n) => (x,y) => {
 	const m = member(n,x,y)
-	if(((m[4])+(m[5])) < 4) return color(255,190,0,255)
-  return color(0,0,0,255)
+	if(((m[4])+(m[5])) < 4) return color(0,0,0,255)
+  return color(255,255,255,255)
 }
 
 const coloredMember = memberColor(color, member, iteration)
