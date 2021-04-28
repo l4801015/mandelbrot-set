@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+  <script src="node_modules/eruda/eruda.js"></script>
+  <script>eruda.init();</script>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+<style>
+canvas {
+  border: 0px solid black;
+
+}
+</style>
+<script>
+  const canvas = document
+    .getElementById('canvas');
+  canvas.width = 600
+  canvas.height = 300
+  const width = canvas.width
+  const height = canvas.height
+  const iteration = 100
+  const xDomain = [-2.5,1]
+  const yCodomain = [-1,1]
+  const ctx = canvas
+    .getContext('2d');
+
+const complex = (r, i) => {
+  return [r,i];
+};
+
+const add = (c1, c2) => {
+  return [
+    c1[0] + c2[0],
+    c1[1] + c2[1]
+  ]
+};
+
+const multiply = (c1, c2) => {
+  return [
+    (c1[0] * c2[0]) - (c1[1] * c2[1]),
+    (c1[1] * c2[0]) + (c1[0] * c2[1])
+  ]
+};
+
+const square = c => {
+  return [
+    (c[0] * c[0]) - (c[1] * c[1]),
+    (c[1] * c[0]) + (c[0] * c[1])
+  ]
+};
+
+const mandelbrotEquation = (n, c) => n === 0 ? complex(0,0) : add(square(mandelbrotEquation(n - 1, c)), c);
+
+const deltaForScaling = (naturalSegment, integerSegment) => {
+	if(integerSegment[0] < 0) return (-1 * integerSegment[0] + integerSegment[1]) / naturalSegment;
+};
+
+const domainProps = [xDomain[0],xDomain[1],deltaForScaling(width, xDomain)]
+
+const scaleNaturalCoordinate = (naturalCoordinate,  axisProps) => {
+	return [naturalCoordinate, axisProps[0] + axisProps[2] * naturalCoordinate];
+};
+
+const axisProperties =  delta => (naturalSegment, integerSegment) => {
+	const deltaForScaling = delta(naturalSegment, integerSegment);
+	return [
+	  naturalSegment,
+		integerSegment[0],
+		integerSegment[1],
+		deltaForScaling
+	]
+};
+
+const planeProps = (xAxisProps, yAxisProps) => {
+  return [
+		xAxisProps[0],
+		xAxisProps[1],
+		xAxisProps[2],
+		xAxisProps[3],
+		
+		yAxisProps[0],
+		yAxisProps[1],
+		yAxisProps[2],
+		yAxisProps[3]
+	];
+};
+
+const scaledCoordinate = (planeProps, scaleNaturalCoordinate) => (x,y) => {
+	const scaledX = scaleNaturalCoordinate(x, [planeProps[1], planeProps[2], planeProps[3]])
+	const scaledY = scaleNaturalCoordinate(y, [planeProps[5], planeProps[6], planeProps[7]])
+	return [].concat(scaledX, scaledY)
+}
+
+//x,y,re,im,mre,mri
+const mandelbrotMember = (coord, mand) => (n, x, y) => {
+	const coordinate = coord(x,y);
+	const mandelbrot = mand(n, [coordinate[1], coordinate[3]]);
+	return [
+	 x,
+	 y,
+	 coordinate[1],
+   coordinate[3],
+   mandelbrot[0],
+   mandelbrot[1]
+	]
+}
+
+/////////////////////////////////////////////////
+
+
+const xAxisProps = axisProperties(deltaForScaling);
+const yAxisProps = axisProperties(deltaForScaling);
+
+const plane = planeProps(
+	xAxisProps(width, xDomain),
+	yAxisProps(height, yCodomain)
+	);
+	
+	const coordinate = scaledCoordinate(plane, scaleNaturalCoordinate);
+	
+const member = mandelbrotMember(coordinate, mandelbrotEquation);
+
+/////////////////////////////////////////////////
+
+const color = (r,g,b,a) => [r,g,b,a]
+
+const memberColor = (color, member, n) => (x,y) => {
+	const m = member(n,x,y)
+	if(((m[4])+(m[5])) < 4) return color(255,190,0,255)
+  return color(0,0,0,255)
+}
+
+const coloredMember = memberColor(color, member, iteration)
+
+/////////////////////////////////////////////////
+
+const arr = (coloredMember, n) => (width, height) => {
+	if(n === width) return coloredMember(n, height)
+  return coloredMember(n,height).concat(arr(coloredMember, n+1)(width, height))
+}
+const xAxis = arr(coloredMember, 0
+
+  )
+
+  const xAxisData = xAxis => n => {
+    const xAxisData = new Uint8ClampedArray(xAxis(width-1,n));                let imageData = new ImageData(xAxisData, width);
+    ctx                                .putImageData(imageData, 0, n);
+  }
+  const drawData = xAxisData(xAxis)
+
+  const iterate = (drawData, n) => m => {
+    if(n === m) return drawData(m)
+    drawData(n)
+    return iterate(drawData,n+1)(m)
+  }
+
+  const drawPlane = iterate(drawData, 0)
+
+  drawPlane(height)
+  console.log(
+      xDomain,
+      yCodomain
+    )
+</script>
+</body>
+</html>
